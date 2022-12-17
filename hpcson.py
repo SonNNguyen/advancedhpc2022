@@ -58,6 +58,33 @@ cc_cores_per_SM_dict = {
 device = cuda.get_current_device()
 my_sms = getattr(device, 'MULTIPROCESSOR_COUNT')
 my_cc = device.compute_capability
+# What is compute capability?
+# https://cvw.cac.cornell.edu/GPUarch/computecap
+"""
+Understanding GPU Architecture: Compute Capability
+The technical properties of the SMs in a particular NVIDIA GPU 
+are represented collectively by a version number called the 
+compute capability of the device. This serves as a reference 
+to the set of features that is supported by the GPU. It can even 
+be discovered by applications at run time to find out whether 
+certain hardware properties and/or instructions are present on the GPU.
+
+Devices with the same first number in their compute capability 
+share the same core architecture. For example, if a device's 
+compute capability starts with a 7, it means that the GPU is 
+based on the Volta architecture; 8 means the Ampere architecture; 
+and so on. Minor version numbers correspond to incremental improvements 
+to the base architecture. For instance, Turing is assigned a compute 
+capability of 7.5 because it is an incremental update of the Volta architecture.
+
+Are you thinking about writing CUDA programs for the NVIDIA graphics card 
+in your personal computer? First, make sure this is a real possibility by 
+searching through the lists of GPUs that are enabled for CUDA. If your card is 
+listed, then note its compute capability, because this number lets you learn all 
+kinds of things about the features and technical specifications of your GPU (much 
+more than a beginner needs to know).
+
+"""
 cores_per_sm = cc_cores_per_SM_dict.get(my_cc)
 total_cores = cores_per_sm*my_sms
 print("GPU compute capability: " , my_cc)
