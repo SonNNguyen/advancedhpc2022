@@ -123,3 +123,67 @@ print("Processing time CPU (Numpy): ", end - start)
 
 imgplot = plt.imshow(out)
 plt.show()
+
+
+img = matplotlib.image.imread('test.jpg')
+# img = img[::5, ::5]
+image = (img[:, :, :3] ).astype('uint8')
+
+
+imageWidth = image.shape[1]
+imageHeight= image.shape[0]
+image = image.reshape(imageWidth*imageHeight,3)
+print(image.shape)
+pixelCount = imageWidth * imageHeight
+
+total_processing_time =[]
+gpu_processing_time = []
+
+blockSize_list = [32, 32, 64, 128, 256, 512, 1024]
+
+
+
+
+
+for idx, blockSize in enumerate(blockSize_list):
+
+  gridSize = int(pixelCount / blockSize)
+  image = image.copy()
+  start = time.time()
+  devData = cuda.to_device(image)
+  devOutput = cuda.device_array(
+                              (imageHeight*imageWidth, 3),
+                              np.uint8)
+  @cuda.jit
+  def grayscale(src, dst):
+    tidx = cuda.threadIdx.x + cuda.blockIdx.x * cuda.blockDim.x
+    g = np.uint8((src[tidx, 0] + src[tidx, 1] + src[tidx, 2]) / 3)
+    dst[tidx, 0] = dst[tidx, 1] = dst[tidx, 2] = g
+
+  gpu_start = time.time()
+  grayscale[gridSize, blockSize](devData, devOutput)
+  gpu_end = time.time()
+
+  hostOutput = devOutput.copy_to_host()
+  hostOutput = hostOutput.reshape((imageHeight, imageWidth,3)).astype('uint8')
+  end = time.time()
+
+  # if idx > 0:
+  total_processing_time.append(end - start)
+  gpu_processing_time.append(gpu_end - gpu_start)
+
+
+
+x_axis = blockSize_list
+y_axis_1 = gpu_processing_time
+y_axis_2 = total_processing_time
+
+plt.figure(figsize=(15,5))
+plt.plot(x_axis, y_axis_1, label ='gpu_processing_time', marker='o')
+plt.plot(x_axis, y_axis_2, label ='total_processing_time', marker='o')
+plt.title('title name')
+plt.xlabel('block size')
+plt.legend()
+
+plt.ylabel('seconds')
+plt.show()
